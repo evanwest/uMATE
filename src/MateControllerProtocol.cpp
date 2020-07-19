@@ -33,17 +33,41 @@ void MateControllerProtocol::send_packet(uint8_t port, packet_t* packet)
     delay(1); // BUGFIX: Other end gets confused if we send packets too fast...
 }
 
+bool MateControllerProtocol::recv_register_response(OUT uint8_t* for_command, OUT response_t* response)
+{
+    uint8_t len = sizeof(response_t);
+    bool recv_success = this->recv_response(for_command, reinterpret_cast<uint8_t*>(response), len);
 
-bool MateControllerProtocol::recv_response(OUT uint8_t* for_command, OUT response_t* response)
+    if(recv_success){
+        // Now deal with swapping endianness of response
+        response->value = SWAPENDIAN_16(response->value);
+    }
+
+    return recv_success;
+}
+
+bool MateControllerProtocol::recv_register_response_blocking(OUT uint8_t* for_command, OUT response_t* response)
+{
+    uint8_t len = sizeof(response_t);
+    bool recv_success = this->recv_response_blocking(for_command, reinterpret_cast<uint8_t*>(response), len);
+
+    if(recv_success){
+        // Now deal with swapping endianness of response
+        response->value = SWAPENDIAN_16(response->value);
+    }
+
+    return recv_success;
+}
+
+
+bool MateControllerProtocol::recv_response(OUT uint8_t* for_command, OUT uint8_t* response, uint8_t expected_len)
 {
     if (for_command == nullptr || response == nullptr)
         return false;
 
-    // NOTE: This is only valid for commands 0-3.
-    // Other commands may return more than sizeof(response_t) bytes...
-    uint8_t len = sizeof(response_t);
-    auto err = recv_data(for_command, reinterpret_cast<uint8_t*>(response), &len);
-    if ((err == CommsStatus::Success) && (len == sizeof(response_t))) {
+    uint8_t len = expected_len;
+    auto err = recv_data(for_command, response, &len);
+    if ((err == CommsStatus::Success) && (len == expected_len)) {
         // port is actually the command we're responding to, plus an error flag in bit7
         uint8_t c = *for_command;
         if (c & 0x80) {
@@ -54,16 +78,17 @@ bool MateControllerProtocol::recv_response(OUT uint8_t* for_command, OUT respons
             return false; // Invalid command
         }
 
-        response->value = SWAPENDIAN_16(response->value);
+        // Expect that the caller will deal with endianness themselves.
         return true;
     }
     return false;
+
 }
 
-bool MateControllerProtocol::recv_response_blocking(OUT uint8_t* for_command, OUT response_t* response)
+bool MateControllerProtocol::recv_response_blocking(OUT uint8_t* for_command, OUT uint8_t* response, uint8_t expected_len)
 {
     for (int i = 0; i < this->timeout; i++) {
-        if (recv_response(for_command, response)) {
+        if (recv_response(for_command, response, expected_len)) {
             return true;
         }
         delay(1);
@@ -107,7 +132,7 @@ int16_t MateControllerProtocol::read(uint16_t addr, uint16_t param, uint8_t port
     // Wait for response, with timeout (BLOCKING)
     uint8_t for_command;
     response_t response;
-    if (recv_response_blocking(&for_command, &response)) {
+    if (recv_register_response_blocking(&for_command, &response)) {
         return response.value;
     }
 

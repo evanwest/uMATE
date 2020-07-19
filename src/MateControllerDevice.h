@@ -41,11 +41,20 @@ public:
         return protocol.get_revision(this->port);
     }
 
+    int8_t get_port() {
+        return this->port;
+    }
+
+    void send(uint8_t port, uint8_t type, uint16_t addr, uint16_t param) {
+        packet_t packet = {.type = type, .addr = addr, .param = param};
+        this->protocol.send_packet(port, &packet);
+    }
+
 protected:
     MateControllerProtocol& protocol;
     DeviceType dtype;
-    int8_t port;
     bool is_open;
+    int8_t port;
 };
 
 #endif /* MATE_CONTROLLER_DEVICE_H */

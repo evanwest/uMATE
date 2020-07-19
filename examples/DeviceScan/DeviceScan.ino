@@ -2,14 +2,8 @@
 // The MATE is a master device and allows you to query and monitor other devices on the bus.
 
 #include <uMate.h>
+#include <MxController.h>
 #include <Serial9b.h>
-
-class MxDeviceController : public MateControllerDevice {
-public:
-    MxDeviceController(MateControllerProtocol& protocol) 
-        : MateControllerDevice(protocol, DeviceType::Mx)
-    { }
-};
 
 class DcDeviceController : public MateControllerDevice {
 public:
@@ -58,7 +52,7 @@ void setup() {
 
 void loop() {
     // TODO: Read device revision
-    if (!devicesFound) {
+    if (!dc_device_available && ! mx_device_available) {
         Serial.println("Scanning for MATE devices...");
         mate_bus.scan_ports();
 

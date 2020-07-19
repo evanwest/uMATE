@@ -65,8 +65,10 @@ public:
     void scan_ports();
 
     void send_packet(uint8_t port, packet_t* packet);
-    bool recv_response(OUT uint8_t* for_command, OUT response_t* response);
-    bool recv_response_blocking(OUT uint8_t* for_command, OUT response_t* response);
+    bool recv_register_response(OUT uint8_t* for_command, OUT response_t* response);
+    bool recv_register_response_blocking(OUT uint8_t* for_command, OUT response_t* response);
+    bool recv_response(OUT uint8_t* for_command, OUT uint8_t* response, uint8_t expected_len);
+    bool recv_response_blocking(OUT uint8_t* for_command, OUT uint8_t* response, uint8_t expected_len);
 
     // Increment/Decrement or Enable/Disable a register
     // addr:    The register address

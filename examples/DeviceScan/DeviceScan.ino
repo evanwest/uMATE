@@ -12,8 +12,8 @@ public:
     { }
 };
 
-MateControllerProtocol mate_bus(Serial9b1, &Serial); // (HardwareSerial9b, Debug Serial)
-//MateControllerProtocol mate_bus(Serial9b1);
+// MateControllerProtocol mate_bus(Serial9b1, &Serial); // (HardwareSerial9b, Debug Serial)
+MateControllerProtocol mate_bus(Serial9b1);
 
 MxDeviceController mx_device(mate_bus);
 DcDeviceController dc_device(mate_bus);
@@ -111,14 +111,33 @@ void loop() {
         if (!mx_device_available || !dc_device_available) {
             devicesFound = false;
         }
+        delay(1000);
     }
     else {
         if (mx_device_available) {
-            //mx_device.query();
+            mx_status_t status = mx_device.query_status();
+            int watts = mx_device.query_watts();
+            Serial.print("Watts: ");
+            Serial.print(watts);
+            Serial.print(", Amps DC In: ");
+            Serial.print(status.pv_current);
+            Serial.print(", Amps DC Out: ");
+            Serial.print((float)status.bat_current / 10.0);
+            Serial.print(", Battery V: ");
+            Serial.print((float)status.bat_voltage / 10.0);
+            Serial.print(", Panel V: ");
+            Serial.print((float)status.pv_voltage / 10.0);
+            Serial.print(", Status: ");
+            Serial.print(status.status);
+            Serial.print(", kWh today: ");
+            Serial.print((float)status.raw_kwh / 10.0);
+            Serial.print(", aH today: ");
+            Serial.println(status.raw_ah);
+
+            delay(1000);
         }
 
-        if (dc_device_available) {
-            //dc_device.query();
-        }
+        // if (dc_device_available) {
+        // }
     }
 }
